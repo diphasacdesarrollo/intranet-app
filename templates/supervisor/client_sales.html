@@ -1,0 +1,85 @@
+{% extends "supervisor/layout.html" %}
+
+{% block content %}
+
+    <h1 class="fs-2">Cliente: {{ client.name }}</h1>
+
+
+    <form class="d-block d-sm-flex d-md-block d-lg-flex align-items-end mb-4"
+          action="{{ url('supervisor_client_sales', args=[client.id]) }}" method="GET" style="gap: 1rem;">
+        {% include 'supervisor/_date_filters.html' %}
+
+        <!-- Product filter -->
+        <div class="w-100">
+            <label class="form-label">Producto</label>
+            <select class="form-select" aria-label="Default select example" name="product_filter">
+                <option selected value=''>Todos los productos</option>
+                {% for product in products %}
+                    <option value="{{ product.id }}" {{ 'selected' if product_filter == product }}>
+                        {{ product.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class=>
+            <button type="submit" class="btn btn-outline-primary px-4">
+                Filtrar
+            </button>
+        </div>
+    </form>
+
+    {% set current_url = request.path %}
+    {% set query_params = request.GET.copy() %}
+    {% set query_params = query_params.update({'export': 'xlsx'}) or query_params %}
+    {% set export_url = current_url + '?' + query_params.urlencode() %}
+
+    {% if visit_items %}
+        <div class="d-flex my-4 align-items-center justify-content-between">
+            <p class="mb-0">Se encontraron {{ paginator.count }} ventas</p>
+            <div>
+                <a href="{{ export_url }}" class="btn btn-outline-success" target="_blank">
+                    Exportar <i class="fa-solid fa-file-excel"></i>
+                </a>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Fecha de visita</th>
+                    <th>Producto</th>
+                    <th>Presentación</th>
+                    <th>Distribuidora</th>
+                    <th>Vendedor</th>
+                    <th>Cantidad</th>
+                    <th>Precio unitario</th>
+                    <th style="min-width: 110px;">Subtotal</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for visit_item in visit_items %}
+                    <tr>
+                        <td>{{ visit_item.visit.check_in.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ visit_item.product.name }}</td>
+                        <td>{{ visit_item.product.presentation }}</td>
+                        <td>{{ visit_item.distributor.name }}</td>
+                        <td>{{ visit_item.visit.user.get_full_name() }}</td>
+                        <td>{{ visit_item.quantity }}</td>
+                        <td>S/ {{ visit_item.unit_price }}</td>
+                        <td>S/ {{ visit_item.subtotal }}</td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <td colspan="7">TOTAL</td>
+                    <td class="fw-semibold">S/ {{ total }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No se encontraron ventas que coincidan con los filtros.</p>
+    {% endif %}
+
+
+{% endblock %}

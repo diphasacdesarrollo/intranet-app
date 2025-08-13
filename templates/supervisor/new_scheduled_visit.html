@@ -1,0 +1,226 @@
+{% extends "supervisor/layout.html" %}
+
+{% block content %}
+
+    <div class=" mb-4">
+        <a href="{{ url('supervisor_scheduled_visits') }}">
+            < Regresar a la lista de rutas
+        </a>
+    </div>
+
+    <h1 class="mb-4">Nueva ruta</h1>
+
+    {% include '_messages.html' %}
+
+    <div class="" style="max-width: 500px;">
+
+        <form action="{{ url('new_schedule_visit') }}" method="POST">
+            {% include 'supervisor/_schedule_visit_form.html' %}
+            <div>
+                <button type="submit" class="btn btn-primary w-100" id="submit">
+                    Guardar nueva ruta
+                </button>
+            </div>
+        </form>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const form = document.querySelector('form');
+                const submitButton = document.getElementById('submit');
+
+                form.addEventListener('submit', function () {
+                    submitButton.disabled = true;
+                    submitButton.textContent = "Enviando..."; // Optional: Change text to indicate submission
+                });
+            });
+        </script>
+
+    <script>
+        // Initialize Google Maps Places Autocomplete for each form
+        function initAutocomplete() {
+            const forms = [
+                {
+                    addressInput: "address1",
+                    placeIdInput: "place-id1",
+                    latitudeInput: "latitude1",
+                    longitudeInput: "longitude1",
+                    clearButton: "clear-button1",
+                },
+                {
+                    addressInput: "address2",
+                    placeIdInput: "place-id2",
+                    latitudeInput: "latitude2",
+                    longitudeInput: "longitude2",
+                    clearButton: "clear-button2",
+                }
+            ];
+
+            forms.forEach(({addressInput, placeIdInput, latitudeInput, longitudeInput, clearButton}) => {
+                const addressElement = document.getElementById(addressInput);
+                const placeIdElement = document.getElementById(placeIdInput);
+                const latitudeElement = document.getElementById(latitudeInput);
+                const longitudeElement = document.getElementById(longitudeInput);
+                const clearButtonElement = document.getElementById(clearButton);
+
+                const autocomplete = new google.maps.places.Autocomplete(addressElement, {
+                    types: ["geocode"],
+                    componentRestrictions: {country: "PE"},
+                });
+
+                // Set bounds dynamically based on user's location
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userLocation = new google.maps.LatLng(
+                        position.coords.latitude,
+                        position.coords.longitude
+                    );
+
+                    const circle = new google.maps.Circle({
+                        center: userLocation,
+                        radius: 10000,
+                    });
+
+                    autocomplete.setBounds(circle.getBounds());
+                });
+
+                // Handle place selection
+                autocomplete.addListener("place_changed", () => {
+                    const place = autocomplete.getPlace();
+
+                    if (place.geometry && place.place_id) {
+                        addressElement.value = place.formatted_address;
+                        placeIdElement.value = place.place_id;
+                        latitudeElement.value = place.geometry.location.lat().toFixed(12);
+                        longitudeElement.value = place.geometry.location.lng().toFixed(12);
+                    }
+                });
+
+                // Clear input fields
+                clearButtonElement.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    addressElement.value = "";
+                    placeIdElement.value = "";
+                    latitudeElement.value = "";
+                    longitudeElement.value = "";
+                });
+            });
+        }
+
+        window.onload = initAutocomplete;
+    </script>
+
+
+    <script>
+        const clientBox = document.getElementById("client-box-1");
+        const suggestionBox = document.getElementById("suggestion-box");
+        const locationSelect = document.getElementById("location-1");
+        const clients = {{ clients_data|safe }};
+
+        const normalizeText = (text) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+        clientBox.addEventListener("input", function () {
+            const query = normalizeText(clientBox.value);
+            suggestionBox.innerHTML = ""; // Clear previous suggestions
+            suggestionBox.style.display = "none";
+
+            if (query) {
+                const suggestions = Object.entries(clients).filter(([key, client]) =>
+                    client.ruc.includes(query) || client.name.toString().toLowerCase().includes(query.toLowerCase())
+                );
+
+                if (suggestions.length > 0) {
+                    suggestions.forEach(([id, client]) => {
+                        const suggestion = document.createElement("div");
+                        suggestion.textContent = `${client.ruc}: ${client.name}`;
+                        suggestion.style.padding = "5px";
+                        suggestion.style.cursor = "pointer";
+
+                        suggestion.addEventListener("click", () => {
+                            clientBox.value = client.name;
+                            populateLocations(client.locations);
+                            suggestionBox.style.display = "none";
+                        });
+
+                        suggestionBox.appendChild(suggestion);
+                    });
+
+                    suggestionBox.style.display = "block";
+                }
+            } else {
+                clearLocations();
+            }
+        });
+
+        document.addEventListener("click", (event) => {
+            if (!suggestionBox.contains(event.target) && event.target !== clientBox) {
+                suggestionBox.style.display = "none";
+            }
+        });
+
+        function populateLocations(locations) {
+            clearLocations();
+
+            locations.forEach(location => {
+                const option = document.createElement("option");
+                option.value = location.id;
+                option.textContent = location.address;
+                locationSelect.appendChild(option);
+            });
+
+            if (locations.length === 1) {
+                locationSelect.value = locations[0].id;
+            }
+        }
+
+        function clearLocations() {
+            locationSelect.innerHTML = '<option selected disabled>Seleccionar local</option>';
+        }
+
+        const clientBox2 = document.getElementById("client-box-2");
+        const suggestionBox2 = document.getElementById("suggestion-box-2");
+        const clientBox2Id = document.getElementById("client-box-2-id");
+
+        clientBox2.addEventListener("input", function () {
+            const query = normalizeText(clientBox2.value);
+            suggestionBox2.innerHTML = ""; // Clear previous suggestions
+            suggestionBox2.style.display = "none";
+
+            if (query) {
+                const suggestions = Object.entries(clients).filter(([key, client]) =>
+                    client.ruc.includes(query) || client.name.toString().toLowerCase().includes(query.toLowerCase())
+                );
+
+                if (suggestions.length > 0) {
+                    suggestions.forEach(([id, client]) => {
+                        const suggestion = document.createElement("div");
+                        suggestion.textContent = `${client.ruc}: ${client.name}`;
+                        suggestion.style.padding = "5px";
+                        suggestion.style.cursor = "pointer";
+
+                        suggestion.addEventListener("click", () => {
+                            clientBox2.value = `${client.ruc}: ${client.name}`; // Set input value
+                            clientBox2Id.value = id; // Set hidden input value
+                            suggestionBox2.style.display = "none";
+                        });
+
+                        suggestionBox2.appendChild(suggestion);
+                    });
+
+                    suggestionBox2.style.display = "block";
+                }
+            }
+        });
+
+        document.addEventListener("click", (event) => {
+            if (!suggestionBox2.contains(event.target) && event.target !== clientBox2) {
+                suggestionBox2.style.display = "none";
+            }
+        });
+
+    </script>
+
+    </div>
+
+
+
+
+{% endblock %}

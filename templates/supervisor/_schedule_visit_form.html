@@ -1,0 +1,57 @@
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+<div class="mb-3">
+    <label class="form-label">Vendedor</label>
+    <select class="form-select" aria-label="Default select example" name="user" required>
+        <option disabled selected value=''>Selecciona un vendedor</option>
+        {% for supervised_user in supervised_users %}
+            <option value="{{ supervised_user.id }}">
+                {{ supervised_user.get_full_name() }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="mb-3">
+    <label for="id_check_in" class="form-label">Fecha  de visita</label>
+    <input type="date" name="check_in" id="id_check_in" class="form-control bg-light" required>
+</div>
+
+<div class="my-3">
+    <div class="d-flex justify-content-between">
+        <label for="id_location" class="form-label">Cliente</label>
+        <a href="#" class="fw-medium" data-bs-toggle="modal" data-bs-target="#newClientLocation">
+            Nuevo cliente
+        </a>
+    </div>
+    <div style="position: relative;">
+        <input type="text" placeholder="Buscar por nombre o número de RUC"
+               class="form-control" id="client-box-1" required
+               value="{{ selected_client if selected_client }}">
+        <div id="suggestion-box"
+             style="position: absolute; top: 100%; left: 0; background: white; border: 1px solid #ccc; width: 100%; z-index: 1000; max-height: 150px; overflow-y: auto; display: none;">
+        </div>
+    </div>
+
+</div>
+
+<div class="my-3">
+    <div class="d-flex justify-content-between">
+        <label for="location-1" class="form-label">Local</label>
+        <a href="" class="fw-medium" data-bs-toggle="modal" data-bs-target="#newLocation">
+            Nuevo Local
+        </a>
+    </div>
+    <select name="location" id="location-1" class="form-select" required>
+        <option selected disabled>Selecciona un local</option>
+        {% if selected_client %}
+            {% for location in selected_client.locations.all() %}
+                <option value="{{ location.pk }}" {{ 'selected' if location.id == selected_location.id }}>
+                    {{ location }}
+                </option>
+            {% endfor %}
+        {% endif %}
+    </select>
+</div>
+
+<input type="hidden" name="supervisor" value="{{ request.user.id }}">

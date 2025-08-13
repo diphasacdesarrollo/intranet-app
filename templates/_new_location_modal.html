@@ -1,0 +1,44 @@
+<!-- New location -->
+<div class="modal fade" id="newLocation" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Añadir local</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url('create_location') }}">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+                    <div class="mb-3">
+                        <label for="address2" class="form-label">Cliente</label>
+                        <div style="position: relative; display: block;">
+                            <input type="text" placeholder="Buscar por nombre" id="client-box-2"
+                                   class="form-control">
+                            <div id="suggestion-box-2"
+                                 style="position: absolute; top: 100%; left: 0; background: white; border: 1px solid #ccc; width: 100%; z-index: 1000; max-height: 150px; overflow-y: auto; display: none;">
+                            </div>
+                        </div>
+                        <input type="hidden" id="client-box-2-id" name="client">
+                    </div>
+
+
+                    <div class="mb-3">
+                        <label for="address2" class="form-label">Dirección</label>
+                        <div class="address-container">
+                            <input id="address2" name="address" type="text" class="form-control"
+                                   placeholder="Ingresa una dirección">
+                            <button id="clear-button2" class="clear-button" title="Clear">&times;</button>
+                        </div>
+                    </div>
+                    <input id="place-id2" type="hidden" name="googlemaps_place_id">
+                    <input id="latitude2" type="hidden" name="latitude">
+                    <input id="longitude2" type="hidden" name="longitude">
+                    <div>
+                        <button type="submit" class="btn btn-primary w-100">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

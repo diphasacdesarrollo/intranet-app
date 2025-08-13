@@ -1,0 +1,37 @@
+{% extends "mobile_base.html" %}
+
+{% block content %}
+
+    <section class="px-4 px-md-5">
+        <h1 class="text-center">Ventas</h1>
+        <div class="container-fluid px-0 mx-auto mt-4" style="max-width: 500px;">
+            <div class="row g-4">
+                <div class="col-6 col-sm-4">
+                    <a href="{{ url('visits') }}">
+                        <div class="card text-center py-3 px-2">
+                            Vendedor
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-sm-4">
+                    <a href="{{ url('supervisor_visits') }}">
+                        <div class="card text-center py-3 px-2">
+                            Supervisor
+                        </div>
+                    </a>
+                </div>
+                {% if request.user.is_staff %}
+                    <div class="col-6 col-sm-4">
+                        <a href="/admin">
+                            <div class="card text-center py-3 px-2">
+                                Administrador
+                            </div>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+
+{% endblock %}

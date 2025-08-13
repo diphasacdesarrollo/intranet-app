@@ -1,0 +1,295 @@
+{% extends "mobile_base.html" %}
+
+{% block content %}
+
+    <div class="mx-auto" style="max-width: 500px;">
+
+        <div class="d-flex justify-content-between">
+            <h1 class="text-center fs-2">Asistencias</h1>
+            <div class="mb-3">
+                <a href="{{ url('start_attendance') }}" class="btn btn-primary px-3">
+                    Registrar asistencia
+                </a>
+            </div>
+        </div>
+
+        {% include '_messages.html' %}
+
+        <form class="d-flex align-items-end mb-4" action="{{ url('attendances') }}" method="GET">
+            <div class="w-100">
+                <label class="form-label">Mes</label>
+                <select name="month_filter" id="month" class="form-control">
+                    {% for month_number, month_name in months.items() %}
+                        <option value="{{ month_number }}" {{ 'selected' if month_number|int == month_filter|int }}>
+                            {{ month_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="px-2"></div>
+            <div class="w-100">
+                <label class="form-label">Año</label>
+                <select name="year_filter" id="" class="form-control">
+                    <option value="2025" selected>2025</option>
+                    <option value="2026">2026</option>
+                    <option value="2026">2027</option>
+                </select>
+            </div>
+            <div class="px-2"></div>
+            <div class="">
+                <button type="submit" class="btn btn-outline-primary px-4">
+                    Filtrar
+                </button>
+            </div>
+        </form>
+
+        {% if attendances %}
+
+            <small>Se encontraron {{ attendances|length }} registros de asistencia</small>
+
+            {% for attendance in attendances %}
+
+                <div class="card mt-4">
+                    <div class="card-header px-3 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <i class="fa-solid fa-calendar"></i>
+                                    </div>
+                                    <p class="d-block mb-0 ms-2">
+                                        {{ attendance.check_in_lima_time.weekday()|spanish_day_of_the_week }}
+                                        {{ attendance.check_in_lima_time.strftime('%d') }}
+                                    </p>
+                                </div>
+                            </div>
+                            {% if attendance.check_out is none %}
+                                <div class="alert alert-warning py-0 mb-0">
+                                    <small>
+                                        <i class="fa-solid fa-triangle-exclamation"></i> No finalizada
+                                    </small>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-success py-0 mb-0">
+                                    <small>
+                                        <i class="fa-solid fa-check"></i> Finalizada
+                                    </small>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="container-fluid px-0">
+                            <div class="row gy-3">
+                                <div class="col-6 col-sm-3 text-center">
+                                    <strong>Entrada</strong><br>
+                                    {{ attendance.check_in_lima_time.strftime('%I:%M %p') }}
+                                </div>
+                                <div class="col-6 col-sm-3 text-center">
+                                    <strong>Salida</strong><br>
+                                    {% if attendance.check_out is not none %}
+                                        {{ attendance.check_out_lima_time.strftime('%I:%M %p') }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </div>
+                                <div class="col-6 col-sm-3 text-center">
+                                    <strong>Duración</strong><br>
+                                    {{ attendance.duration.strftime('%H') }}h
+                                    {{ attendance.duration.strftime('%M') }}m
+                                </div>
+                                <div class="col-6 col-sm-3 text-center">
+                                    <strong>Visitas</strong><br>
+                                    {{ attendance.get_visits_count() }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if attendance.check_out is none %}
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-primary w-100"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#exampleModal">
+                                    Registrar fin de jornada
+                                </button>
+                            </div>
+
+                            <div class="modal fade" id="exampleModal" tabindex="-1"
+                                 aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h1 class="modal-title fs-5" id="exampleModalLabel">Registrar fin de
+                                                jornada</h1>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form method="post"
+                                                  action="{{ url('end_attendance', args=[attendance.id]) }}">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                                                <div class="mb-3">
+                                                    <label for="id_check_in" class="form-label">Fecha y hora de
+                                                        fin</label>
+                                                    <input type="datetime-local" name="check_out" id="id_check_in"
+                                                           class="form-control bg-light"
+                                                           readonly
+                                                           required>
+                                                </div>
+
+                                                <script>
+                                                    function updateDateTime() {
+                                                        const input = document.getElementById('id_check_in');
+                                                        const now = new Date();
+
+                                                        // Adjust to GMT-5 (subtract 5 hours)
+                                                        const gmtMinus5 = new Date(now.getTime() - 5 * 60 * 60 * 1000);
+
+                                                        // Format the date to 'YYYY-MM-DDTHH:MM:SS' for display purposes
+                                                        const year = gmtMinus5.getUTCFullYear();
+                                                        const month = String(gmtMinus5.getUTCMonth() + 1).padStart(2, '0');
+                                                        const day = String(gmtMinus5.getUTCDate()).padStart(2, '0');
+                                                        const hours = String(gmtMinus5.getUTCHours()).padStart(2, '0');
+                                                        const minutes = String(gmtMinus5.getUTCMinutes()).padStart(2, '0');
+                                                        const seconds = String(gmtMinus5.getUTCSeconds()).padStart(2, '0');
+
+                                                        const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+                                                        input.value = formattedDate.slice(0, 16); // Truncate seconds for datetime-local input
+                                                    }
+
+                                                    // Update the field every second
+                                                    setInterval(updateDateTime, 1000);
+
+                                                    // Initialize the value immediately when the page loads
+                                                    document.addEventListener('DOMContentLoaded', updateDateTime);
+                                                </script>
+
+                                                <div class="container-fluid px-0">
+                                                    <div class="row">
+                                                        <div class="col">
+                                                            <label for="id_latitude"
+                                                                   class="form-label">Latitud</label>
+                                                            <input type="text" name="latitude_check_out"
+                                                                   id="id_latitude"
+                                                                   class="form-control bg-light" readonly
+                                                                   required>
+                                                        </div>
+                                                        <div class="col">
+                                                            <label for="id_longitude"
+                                                                   class="form-label">Longitud</label>
+                                                            <input type="text" name="longitude_check_out"
+                                                                   id="id_longitude"
+                                                                   class="form-control bg-light" readonly
+                                                                   required>
+                                                            <div class="invalid-feedback">Please provide a valid
+                                                                longitude.
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <small>
+                                                    <a href="#" id="toggle-map" class="text-primary">Mostrar
+                                                        mapa</a>
+                                                </small>
+
+                                                <div id="map-container" class="mt-3 d-none">
+                                                    <iframe id="google-map"
+                                                            src="https://maps.google.com/maps?q=0,0&z=15&output=embed"
+                                                            style="width: 100%; height: 400px; border: 0;"
+                                                            allowfullscreen
+                                                            loading="lazy">
+                                                    </iframe>
+                                                </div>
+
+                                                <script>
+                                                    function updateGoogleMap(latitude, longitude) {
+                                                        const mapIframe = document.getElementById('google-map');
+                                                        mapIframe.src = `https://maps.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`;
+                                                    }
+
+                                                    function getLocation() {
+                                                        const latitudeInput = document.getElementById('id_latitude');
+                                                        const longitudeInput = document.getElementById('id_longitude');
+                                                        const latitudeDanger = document.getElementById('latitude-danger');
+                                                        const longitudeDanger = document.getElementById('longitude-danger');
+
+                                                        if (navigator.geolocation) {
+                                                            navigator.geolocation.getCurrentPosition(
+                                                                (position) => {
+                                                                    const latitude = position.coords.latitude;
+                                                                    const longitude = position.coords.longitude;
+
+                                                                    // Set latitude and longitude in inputs
+                                                                    latitudeInput.value = latitude.toFixed(7);
+                                                                    longitudeInput.value = longitude.toFixed(7);
+
+                                                                    // Update Google Map
+                                                                    updateGoogleMap(latitude, longitude);
+
+                                                                    document.getElementById('visit-submit').disabled = false;
+                                                                },
+                                                                (error) => {
+                                                                    if (error.code === error.PERMISSION_DENIED) {
+                                                                        alert('Se requiere el acceso a tu ubicación para continuar.');
+                                                                        latitudeDanger.classList.remove('d-none');
+                                                                        longitudeDanger.classList.remove('d-none');
+                                                                    } else {
+                                                                        console.error('Error retrieving location:', error.message);
+                                                                    }
+                                                                }
+                                                            );
+                                                        } else {
+                                                            alert('Geolocation is not supported by this browser.');
+                                                        }
+                                                    }
+
+                                                    function toggleMapVisibility() {
+                                                        const mapContainer = document.getElementById('map-container');
+                                                        const toggleLink = document.getElementById('toggle-map');
+
+                                                        if (mapContainer.classList.contains('d-none')) {
+                                                            // Show map
+                                                            mapContainer.classList.remove('d-none');
+                                                            toggleLink.textContent = 'Ocultar mapa';
+                                                        } else {
+                                                            // Hide map
+                                                            mapContainer.classList.add('d-none');
+                                                            toggleLink.textContent = 'Mostrar mapa';
+                                                        }
+                                                    }
+
+                                                    // Add event listener for toggle map link
+                                                    document.getElementById('toggle-map').addEventListener('click', function (event) {
+                                                        event.preventDefault();
+                                                        toggleMapVisibility();
+                                                    });
+
+                                                    // Attempt to get location on page load
+                                                    document.addEventListener('DOMContentLoaded', getLocation);
+                                                </script>
+
+                                                <button type="submit" class="btn btn-primary w-100 mt-3"
+                                                        id="visit-submit" disabled>
+                                                    Registrar fin de asistencia
+                                                </button>
+
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">No hay registros de asistencia en el mes y año seleccionado.</div>
+        {% endif %}
+
+    </div>
+
+
+{% endblock %}

@@ -1,0 +1,402 @@
+{% extends "mobile_base.html" %}
+
+{% block content %}
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAyIZy6R__9Vcu8IntUmtVdeHXxiFHaUj4&libraries=places"></script>
+
+    <button onclick="window.history.back()" class="btn btn-link">
+        < Regresar
+    </button>
+
+    <div class="mx-auto" style="max-width: 500px;">
+        <h1 class="text-center fs-3">Empezar nueva visita</h1>
+
+        {% include '_messages.html' %}
+
+        <form method="post" action="{{ url('start_visit') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="mb-3">
+                <label for="id_check_in" class="form-label">Fecha y hora de inicio</label>
+                <input type="datetime-local" name="check_in" id="id_check_in" class="form-control bg-light"
+                       readonly required>
+            </div>
+
+            <script>
+                function updateDateTime() {
+                    const input = document.getElementById('id_check_in');
+                    const now = new Date();
+
+                    // Adjust to GMT-5 (subtract 5 hours)
+                    const gmtMinus5 = new Date(now.getTime() - 5 * 60 * 60 * 1000);
+
+                    // Format the date to 'YYYY-MM-DDTHH:MM:SS' for display purposes
+                    const year = gmtMinus5.getUTCFullYear();
+                    const month = String(gmtMinus5.getUTCMonth() + 1).padStart(2, '0');
+                    const day = String(gmtMinus5.getUTCDate()).padStart(2, '0');
+                    const hours = String(gmtMinus5.getUTCHours()).padStart(2, '0');
+                    const minutes = String(gmtMinus5.getUTCMinutes()).padStart(2, '0');
+                    const seconds = String(gmtMinus5.getUTCSeconds()).padStart(2, '0');
+
+                    const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+                    input.value = formattedDate.slice(0, 16); // Truncate seconds for datetime-local input
+                }
+
+                // Update the field every second
+                setInterval(updateDateTime, 1000);
+
+                // Initialize the value immediately when the page loads
+                document.addEventListener('DOMContentLoaded', updateDateTime);
+            </script>
+
+            <div class="container-fluid px-0">
+                <div class="row">
+                    <div class="col">
+                        <label for="id_latitude" class="form-label">Latitud</label>
+                        <input type="text" name="latitude" id="id_latitude" class="form-control bg-light" readonly
+                               required>
+                    </div>
+                    <div class="col">
+                        <label for="id_longitude" class="form-label">Longitud</label>
+                        <input type="text" name="longitude" id="id_longitude" class="form-control bg-light" readonly
+                               required>
+                        <div class="invalid-feedback">Please provide a valid longitude.</div>
+                    </div>
+                </div>
+            </div>
+
+            <small>
+                <a href="#" id="toggle-map" class="text-primary">Mostrar mapa</a>
+            </small>
+
+            <div id="map-container" class="mt-3 d-none">
+                <iframe id="google-map"
+                        src="https://maps.google.com/maps?q=0,0&z=15&output=embed"
+                        style="width: 100%; height: 400px; border: 0;"
+                        allowfullscreen
+                        loading="lazy">
+                </iframe>
+            </div>
+
+            <script>
+                function updateGoogleMap(latitude, longitude) {
+                    const mapIframe = document.getElementById('google-map');
+                    mapIframe.src = `https://maps.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`;
+                }
+
+                function getLocation() {
+                    const latitudeInput = document.getElementById('id_latitude');
+                    const longitudeInput = document.getElementById('id_longitude');
+                    const latitudeDanger = document.getElementById('latitude-danger');
+                    const longitudeDanger = document.getElementById('longitude-danger');
+
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                const latitude = position.coords.latitude;
+                                const longitude = position.coords.longitude;
+
+                                // Set latitude and longitude in inputs
+                                latitudeInput.value = latitude.toFixed(7);
+                                longitudeInput.value = longitude.toFixed(7);
+
+                                // Update Google Map
+                                updateGoogleMap(latitude, longitude);
+
+                                document.getElementById('visit-submit').disabled = false;
+                            },
+                            (error) => {
+                                if (error.code === error.PERMISSION_DENIED) {
+                                    alert('Se requiere el acceso a tu ubicación para continuar.');
+                                    latitudeDanger.classList.remove('d-none');
+                                    longitudeDanger.classList.remove('d-none');
+                                } else {
+                                    console.error('Error retrieving location:', error.message);
+                                }
+                            }
+                        );
+                    } else {
+                        alert('Geolocation is not supported by this browser.');
+                    }
+                }
+
+                function toggleMapVisibility() {
+                    const mapContainer = document.getElementById('map-container');
+                    const toggleLink = document.getElementById('toggle-map');
+
+                    if (mapContainer.classList.contains('d-none')) {
+                        // Show map
+                        mapContainer.classList.remove('d-none');
+                        toggleLink.textContent = 'Ocultar mapa';
+                    } else {
+                        // Hide map
+                        mapContainer.classList.add('d-none');
+                        toggleLink.textContent = 'Mostrar mapa';
+                    }
+                }
+
+                // Add event listener for toggle map link
+                document.getElementById('toggle-map').addEventListener('click', function (event) {
+                    event.preventDefault();
+                    toggleMapVisibility();
+                });
+
+                // Attempt to get location on page load
+                document.addEventListener('DOMContentLoaded', getLocation);
+            </script>
+
+            <div class="my-3">
+                <div class="d-flex justify-content-between">
+                    <label for="id_location" class="form-label">Cliente</label>
+                    <a href="#" class="fw-medium" data-bs-toggle="modal" data-bs-target="#newClientLocation">
+                        Nuevo cliente
+                    </a>
+                </div>
+                <div style="position: relative;">
+                    <input type="text" placeholder="Buscar por nombre o número de RUC"
+                           class="form-control" id="client-box-1" required
+                           value="{{ selected_client if selected_client }}">
+                    <div id="suggestion-box"
+                         style="position: absolute; top: 100%; left: 0; background: white; border: 1px solid #ccc; width: 100%; z-index: 1000; max-height: 150px; overflow-y: auto; display: none;">
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="my-3">
+                <div class="d-flex justify-content-between">
+                    <label for="location-1" class="form-label">Local</label>
+                    <a href="" class="fw-medium" data-bs-toggle="modal" data-bs-target="#newLocation">
+                        Nuevo Local
+                    </a>
+                </div>
+                <select name="location" id="location-1" class="form-select" required>
+                    <option selected disabled>Selecciona un local</option>
+                    {% if selected_client %}
+                        {% for location in selected_client.locations.all() %}
+                            <option value="{{ location.pk }}" {{ 'selected' if location.id == selected_location.id }}>
+                                {{ location }}
+                            </option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+
+            <div>
+                <label for="comment" class="form-label">Comentario (opcional)</label>
+                <textarea class="form-control" name="comment" id="comment" cols="30" rows="2"></textarea>
+            </div>
+
+            <input type="hidden" name="user" value="{{ request.user.id }}">
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary w-100" id="visit-submit" disabled>
+                    Empezar visita
+                </button>
+            </div>
+
+        </form>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const form = document.querySelector('form');
+                const submitButton = document.getElementById('visit-submit');
+
+                form.addEventListener('submit', function () {
+                    submitButton.disabled = true;
+                    submitButton.textContent = "Enviando..."; // Optional: Change text to indicate submission
+                });
+            });
+        </script>
+    </div>
+
+
+    {% include '_new_client_location_modal.html' %}
+
+    {% include '_new_location_modal.html' %}
+
+    <script>
+        // Initialize Google Maps Places Autocomplete for each form
+        function initAutocomplete() {
+            const forms = [
+                {
+                    addressInput: "address1",
+                    placeIdInput: "place-id1",
+                    latitudeInput: "latitude1",
+                    longitudeInput: "longitude1",
+                    clearButton: "clear-button1",
+                },
+                {
+                    addressInput: "address2",
+                    placeIdInput: "place-id2",
+                    latitudeInput: "latitude2",
+                    longitudeInput: "longitude2",
+                    clearButton: "clear-button2",
+                }
+            ];
+
+            forms.forEach(({addressInput, placeIdInput, latitudeInput, longitudeInput, clearButton}) => {
+                const addressElement = document.getElementById(addressInput);
+                const placeIdElement = document.getElementById(placeIdInput);
+                const latitudeElement = document.getElementById(latitudeInput);
+                const longitudeElement = document.getElementById(longitudeInput);
+                const clearButtonElement = document.getElementById(clearButton);
+
+                const autocomplete = new google.maps.places.Autocomplete(addressElement, {
+                    types: ["geocode"],
+                    componentRestrictions: {country: "PE"},
+                });
+
+                // Set bounds dynamically based on user's location
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userLocation = new google.maps.LatLng(
+                        position.coords.latitude,
+                        position.coords.longitude
+                    );
+
+                    const circle = new google.maps.Circle({
+                        center: userLocation,
+                        radius: 10000,
+                    });
+
+                    autocomplete.setBounds(circle.getBounds());
+                });
+
+                // Handle place selection
+                autocomplete.addListener("place_changed", () => {
+                    const place = autocomplete.getPlace();
+
+                    if (place.geometry && place.place_id) {
+                        addressElement.value = place.formatted_address;
+                        placeIdElement.value = place.place_id;
+                        latitudeElement.value = place.geometry.location.lat().toFixed(12);
+                        longitudeElement.value = place.geometry.location.lng().toFixed(12);
+                    }
+                });
+
+                // Clear input fields
+                clearButtonElement.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    addressElement.value = "";
+                    placeIdElement.value = "";
+                    latitudeElement.value = "";
+                    longitudeElement.value = "";
+                });
+            });
+        }
+
+        window.onload = initAutocomplete;
+    </script>
+
+
+    <script>
+        const clientBox = document.getElementById("client-box-1");
+        const suggestionBox = document.getElementById("suggestion-box");
+        const locationSelect = document.getElementById("location-1");
+        const clients = {{ clients_data|safe }};
+
+        const normalizeText = (text) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+        clientBox.addEventListener("input", function () {
+            const query = normalizeText(clientBox.value);
+            suggestionBox.innerHTML = ""; // Clear previous suggestions
+            suggestionBox.style.display = "none";
+
+            if (query) {
+                const suggestions = Object.entries(clients).filter(([key, client]) =>
+                    client.ruc.includes(query) || client.name.toString().toLowerCase().includes(query.toLowerCase())
+                );
+
+                if (suggestions.length > 0) {
+                    suggestions.forEach(([id, client]) => {
+                        const suggestion = document.createElement("div");
+                        suggestion.textContent = `${client.ruc}: ${client.name}`;
+                        suggestion.style.padding = "5px";
+                        suggestion.style.cursor = "pointer";
+
+                        suggestion.addEventListener("click", () => {
+                            clientBox.value = client.name;
+                            populateLocations(client.locations);
+                            suggestionBox.style.display = "none";
+                        });
+
+                        suggestionBox.appendChild(suggestion);
+                    });
+
+                    suggestionBox.style.display = "block";
+                }
+            } else {
+                clearLocations();
+            }
+        });
+
+        document.addEventListener("click", (event) => {
+            if (!suggestionBox.contains(event.target) && event.target !== clientBox) {
+                suggestionBox.style.display = "none";
+            }
+        });
+
+        function populateLocations(locations) {
+            clearLocations();
+
+            locations.forEach(location => {
+                const option = document.createElement("option");
+                option.value = location.id;
+                option.textContent = location.address;
+                locationSelect.appendChild(option);
+            });
+
+            if (locations.length === 1) {
+                locationSelect.value = locations[0].id;
+            }
+        }
+
+        function clearLocations() {
+            locationSelect.innerHTML = '<option selected disabled>Seleccionar local</option>';
+        }
+
+        const clientBox2 = document.getElementById("client-box-2");
+        const suggestionBox2 = document.getElementById("suggestion-box-2");
+        const clientBox2Id = document.getElementById("client-box-2-id");
+
+        clientBox2.addEventListener("input", function () {
+            const query = normalizeText(clientBox2.value);
+            suggestionBox2.innerHTML = ""; // Clear previous suggestions
+            suggestionBox2.style.display = "none";
+
+            if (query) {
+                const suggestions = Object.entries(clients).filter(([key, client]) =>
+                    client.ruc.includes(query) || client.name.toString().toLowerCase().includes(query.toLowerCase())
+                );
+
+                if (suggestions.length > 0) {
+                    suggestions.forEach(([id, client]) => {
+                        const suggestion = document.createElement("div");
+                        suggestion.textContent = `${client.ruc}: ${client.name}`;
+                        suggestion.style.padding = "5px";
+                        suggestion.style.cursor = "pointer";
+
+                        suggestion.addEventListener("click", () => {
+                            clientBox2.value = `${client.ruc}: ${client.name}`; // Set input value
+                            clientBox2Id.value = id; // Set hidden input value
+                            suggestionBox2.style.display = "none";
+                        });
+
+                        suggestionBox2.appendChild(suggestion);
+                    });
+
+                    suggestionBox2.style.display = "block";
+                }
+            }
+        });
+
+        document.addEventListener("click", (event) => {
+            if (!suggestionBox2.contains(event.target) && event.target !== clientBox2) {
+                suggestionBox2.style.display = "none";
+            }
+        });
+
+    </script>
+
+
+{% endblock %}

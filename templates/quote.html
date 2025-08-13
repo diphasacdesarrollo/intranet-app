@@ -1,0 +1,138 @@
+{% extends "mobile_base.html" %}
+
+{% block content %}
+
+    <a href="{{ url('index') }}">
+        < Regresar a cotizaciones
+    </a>
+
+    <h3 class="text-center">Cotización #{{ '%05d' % quote.id }}: {{ quote.name }}</h3>
+
+    {% include '_messages.html' %}
+
+    {% if items %}
+
+        <!-- Button trigger modal -->
+        <div class="mb-3">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                Agregar nuevo producto
+            </button>
+        </div>
+
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Producto</th>
+                    <th scope="col">Presentación</th>
+                    <th scope="col">VVF s/IGV</th>
+                    <th scope="col">Descuento</th>
+                    <th scope="col">Precio unitario<br>{{ quote.client }} s/IGV</th>
+                    <th scope="col">Cantidad</th>
+                    <th scope="col">Total sin IGV</th>
+                    <th scope="col">Total con IGV</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in items %}
+                    <tr>
+                        <th scope="row">{{ item.product.code }}</th>
+                        <td>{{ item.product.name }}</td>
+                        <td>
+                            {% if item.product.presentation %}
+                                {{ item.product.presentation }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>S/ {{ item.product.unit_price }}</td>
+                        <td>{{ item.discount*100|round|int }} %</td>
+                        <td>S/ {{ item.unit_price }}</td>
+                        <td>{{ item.total_quantity }}</td>
+                        <td>S/ {{ item.total_price_without_tax }}</td>
+                        <td>S/ {{ item.total_price_with_tax }}</td>
+                        <td>
+                            <a href="{{ url('edit_quote_item', args=[item.id]) }}">
+                                <i class="fa-solid fa-pencil"></i>
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{{ url('delete_quote_item', args=[item.id]) }}">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    {% else %}
+
+        <p>No has agregado ningún producto a la cotización.</p>
+
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+            Agregar nuevo producto
+        </button>
+
+    {% endif %}
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Busca un producto</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url('new_quote_item') }}" method="POST">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        <input type="hidden" name="client" value="{{ quote.client }}">
+                        <input type="hidden" name="quote" value="{{ quote.id }}">
+
+                        <div class="">
+                            <label for="" class="form-label">Producto</label>
+                            <select class="form-select" name="product">
+                                <option selected>Selecciona un producto</option>
+                                {% for product in products %}
+                                    <option value="{{ product.id }}">{{ product }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="exampleFormControlInput1" class="form-label">Cantidad</label>
+                            <input type="number" class="form-control" id="exampleFormControlInput1" step="1"
+                                   name="quantity">
+                        </div>
+
+                        <div class="mt-4">
+                            <button class="btn btn-primary w-100">
+                                Buscar producto
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if quote.count_items > 0 %}
+        <div>
+            <a href="{{ url('export_quote_to_excel', args=[quote.id]) }}" class="btn btn-outline-success">
+                Exportar a Excel
+            </a>
+            <a href="{{ url('send_quote_by_mail', args=[quote.id]) }}" class="btn btn-outline-secondary">
+                Enviar por correo
+            </a>
+        </div>
+    {% endif %}
+
+{% endblock %}

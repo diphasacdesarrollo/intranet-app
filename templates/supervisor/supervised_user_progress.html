@@ -1,0 +1,135 @@
+{% extends "supervisor/layout.html" %}
+
+{% block content %}
+
+    <a href="{{ url('supervised_users') }}">
+        < Ver todos los vendedores
+    </a>
+
+    <div class="mx-auto">
+
+        <h1 class="mt-4">Progreso de {{ user.get_full_name() }}</h1>
+
+        {% include '_messages.html' %}
+
+        {% if product_prices %}
+        {% else %}
+            <p>No hay productos incentivados para este mes.</p>
+        {% endif %}
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                <tr class="text-center">
+                    <th>Producto</th>
+                    <th style="min-width: 125px;">Objetivo 1</th>
+                    <th style="min-width: 125px;">Objetivo 2</th>
+                    <th>Incentivo ganado</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for product_price in product_prices %}
+                    <tr>
+                        <!-- Product name -->
+                        <th scope="row">{{ product_price.product.name }}</th>
+
+                        <!-- Objective 1 -->
+                        <td class="text-end">
+                            {{ product_price.total_quantity }} / {{ product_price.quantity_a }}
+                            <div class="progress" role="progressbar" aria-label="Example with label"
+                                 aria-valuenow="{{ (product_price.progress_a * 100)|int }}"
+                                 aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar" style="width:{{ (product_price.progress_a * 100)|int }}%">
+                                    {{ (product_price.progress_a * 100)|int }}%
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Objective 2 -->
+                        <td class="text-end">
+                            {% if product_price.quantity_b is not none %}
+                                {{ product_price.total_quantity }} / {{ product_price.quantity_b }}
+                                <div class="progress" role="progressbar" aria-label="Example with label"
+                                     aria-valuenow="{{ (product_price.progress_b * 100)|int }}"
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar" style="width:{{ (product_price.progress_b * 100)|int }}%">
+                                        {{ (product_price.progress_b * 100)|int }}%
+                                    </div>
+                                </div>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <!-- Commission -->
+                        <td class="text-end">
+                            S/ {{ product_price.commission }}
+                        </td>
+
+                        <!-- Detail -->
+                        <td>
+                            <a href="" data-bs-toggle="modal" data-bs-target="#detail{{ product_price.id }}">
+                                <i class="fa-solid fa-receipt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+
+    </div>
+
+    {% for product_price in product_prices %}
+        <div class="modal fade" id="detail{{ product_price.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">{{ product_price.product.name }}</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {% if product_price.visit_items %}
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>Fecha de visita</th>
+                                        <th>Cliente</th>
+                                        <th>Precio unitario</th>
+                                        <th>Cantidad</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for visit_item in product_price.visit_items %}
+                                        <tr>
+                                            <td>{{ visit_item.visit.check_in_lima_time.strftime('%d/%m') }}</td>
+                                            <td>{{ visit_item.visit.location.client.name }}</td>
+                                            <td>S/ {{ visit_item.unit_price }}</td>
+                                            <td>{{ visit_item.quantity }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                    <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th></th>
+                                        <th>Total</th>
+                                        <th>{{ product_price.total_quantity }}</th>
+                                    </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p>No hay ninguna venta</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% endfor %}
+
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "supervisor/layout.html" %}
+
+{% block content %}
+
+    <form class="d-block d-sm-flex d-md-block d-lg-flex align-items-end mb-4"
+          action="{{ url('supervisor_reports') }}" method="GET" style="gap: 1rem;">
+        {% include 'supervisor/_date_filters.html' %}
+
+        <!-- Client filter -->
+        <div class="w-100">
+            <label class="form-label">Cliente</label>
+            <select class="form-select" aria-label="Default select example" name="client_filter">
+                <option selected value=''>Todos los clientes</option>
+                {% for client in clients %}
+                    <option value="{{ client.id }}" {{ 'selected' if client_filter == client }}>
+                        {{ client.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class=>
+            <button type="submit" class="btn btn-outline-primary px-4">
+                Filtrar
+            </button>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Product / Client</th>
+                {% for clients_column in clients_columns %}
+                    <th>{{ clients_column }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for product in products %}
+                <tr>
+                    <td>{{ product }}</td>
+                    {% for clients_column in clients_columns %}
+                        <td>
+                            <a href="{{ url('supervisor_client_sales', args=[clients_ids.get(clients_column)]) }}?from_date={{ from_date }}&to_date={{ to_date }}&product_filter={{ products_ids.get(product) }}">
+                                {{ data.get(product, {}).get(clients_column, 0) }} unidades
+                            </a>
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <small>*Los clientes y productos sin resultados son aquellos que no han tenido ninguna venta registrada
+        dentro del rango de fechas</small>
+
+
+
+
+
+
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "supervisor/layout.html" %}
+
+{% block content %}
+
+    {% if request.user.is_staff %}
+        <a href="{{ url('import_excel') }}" class="btn btn-outline-success">
+            Subir clientes por zona
+        </a>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Nombre</th>
+                <th scope="col">Correo</th>
+                <th scope="col">Visitas</th>
+                <th scope="col">Rutas</th>
+                <th scope="col">Progresos</th>
+                <th scope="col">Asistencias</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for user in supervised_users %}
+                <tr>
+                    <td>{{ user.first_name }} {{ user.last_name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <a href="{{ url('supervisor_visits') }}?supervised_user_filter={{ user.id }}">
+                            Ver visitas
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{{ url('supervisor_scheduled_visits') }}?supervised_user_filter={{ user.id }}">
+                            Ver rutas
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{{ url('supervised_user_progress', args=[user.id]) }}">
+                            Ver progreso
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{{ url('supervisor_attendances') }}?supervised_user_filter={{ user.id }}">
+                            Ver asistencias
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock %}

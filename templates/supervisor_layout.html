@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html style="overflow-x: hidden;">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Diphasac</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
+    <link href="{{ static('css/bootstrap.min.css') }}" rel="stylesheet">
+    <script src="{{ static('js/bootstrap.bundle.min.js') }}"></script>
+
+    <!-- Custom css -->
+    <link href="{{ static('css/style.css') }}" rel="stylesheet">
+
+    <!-- Font awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+          integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+
+</head>
+
+<body>
+
+    <div class="d-flex" style="height: 100vh;">
+
+        <div class="d-flex flex-column px-4 bg-dark" style="color: white; min-width: 200px; max-width: 300px;">
+            <div class="py-4">
+            </div>
+            <div>
+                <a href="{{ url('dashboard') }}"
+                   class="d-flex align-items-center btn btn-dark {{ active if request.path=="/" }}">
+                    <div style="width: 25px;">
+                        <i class="fa-solid fa-money-bill-transfer"></i>
+                    </div>
+                    <div class="ms-2">
+                        <p class="mb-0">
+                            Caja
+                        </p>
+                    </div>
+                </a>
+
+                <!-- Cierres de caja -->
+                {% if request.user.is_superuser %}
+                    <a href="{{ url('balances') }}"
+                       class="d-flex align-items-center mt-3 btn btn-dark {{ active if request.path=="/cierres-de-caja" }}">
+                        <div style="width: 25px;">
+                            <i class="fa-solid fa-cash-register"></i>
+                        </div>
+                        <div class="ms-2">
+                            <p class="mb-0">
+                                Cierres
+                            </p>
+                        </div>
+                    </a>
+                {% endif %}
+
+                <a href="{{ url('transfers') }}"
+                   class="d-flex align-items-center mt-3 btn btn-dark">
+                    <div style="width: 25px;">
+                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                    </div>
+                    <div class="ms-2">
+                        <p class="mb-0">
+                            Movimientos
+                        </p>
+                    </div>
+                </a>
+
+                <!-- Inflows button -->
+                <a href="{{ url('inflows') }}"
+                   class="d-flex align-items-center mt-3 btn btn-dark {{ active if 'ingresos' in request.path }}">
+                    <div style="width: 25px;">
+                        <i class="fa-solid fa-up"></i>
+                    </div>
+                    <div class="ms-2">
+                        <p class="mb-0">
+                            Ingresos
+                        </p>
+                    </div>
+                </a>
+
+                <a href="{{ url('outflows') }}"
+                   class="d-flex align-items-center mt-3 btn btn-dark {{ active if 'egresos' in request.path }}">
+                    <div style="width: 25px;">
+                        <i class="fa-solid fa-down"></i>
+                    </div>
+                    <div class="ms-2">
+                        <p class="mb-0">
+                            Egresos
+                        </p>
+                    </div>
+                </a>
+
+                <!-- Invoices button -->
+                <a href="{{ url('invoices') }}"
+                   class="d-flex align-items-center mt-3 btn btn-dark {{ active if 'facturas' in request.path }}">
+                    <div style="width: 25px;">
+                        <i class="fa-solid fa-file-invoice"></i>
+                    </div>
+                    <div class="ms-2">
+                        <p class="mb-0">
+                            Facturas
+                        </p>
+                    </div>
+                </a>
+
+                <a href="{{ url('bank_accounts') }}"
+                   class="d-flex align-items-center mt-3 btn btn-dark {{ active if 'cuentas-bancarias' in request.path }}">
+                    <div style="width: 25px;">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <div class="ms-2">
+                        <p class="mb-0">
+                            Cuentas
+                        </p>
+                    </div>
+                </a>
+
+                <a href="{{ url('clients') }}"
+                   class="d-flex align-items-center mt-3 btn btn-dark {{ active if 'clientes' in request.path }}">
+                    <div style="width: 25px;">
+                        <i class="fa-solid fa-building"></i>
+                    </div>
+                    <div class="ms-2">
+                        <p class="mb-0">
+                            Clientes
+                        </p>
+                    </div>
+                </a>
+
+                <a href="{{ url('suppliers') }}"
+                   class="d-flex align-items-center mt-3 btn btn-dark {{ active if 'proveedores' in request.path }}">
+                    <div style="width: 25px;">
+                        <i class="fa-solid fa-building"></i>
+                    </div>
+                    <div class="ms-2">
+                        <p class="mb-0">
+                            Proveedores
+                        </p>
+                    </div>
+                </a>
+
+                <div class="bg-white w-100 mt-3" style="height: 1px">
+                </div>
+
+                <a href="/admin/" target="_blank"
+                   class="d-flex align-items-center mt-3 btn btn-dark">
+                    <div style="width: 25px;">
+                        <i class="fa-solid fa-gear"></i>
+                    </div>
+                    <div class="ms-2">
+                        <p class="mb-0 text-start">
+                            Admin
+                        </p>
+                    </div>
+                </a>
+
+                <a href="{{ url('logout') }}"
+                   class="d-flex align-items-center mt-3 btn btn-dark">
+                    <div style="width: 25px;">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </div>
+                    <div class="ms-2">
+                        <p class="mb-0 text-start">
+                            Cerrar sesión
+                        </p>
+                    </div>
+                </a>
+
+            </div>
+
+        </div>
+        <div class="p-5" style="height: 100vh; overflow-y: scroll; width: 100%;">
+            {% block content_2 %}
+            {% endblock %}
+        </div>
+    </div>
+
+</body>

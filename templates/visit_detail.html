@@ -1,0 +1,219 @@
+{% extends "mobile_base.html" %}
+
+{% block content %}
+
+    <div class="mx-auto" style="max-width: 500px;">
+            
+        <a href="{{ url('visits') }}?filter_date={{ visit.check_in_lima_time.strftime('%Y-%m-%d') }}"
+           class="d-flex fw-semibold align-items-center text-decoration-none">
+            <i class="fa-solid fa-angle-left"></i>
+            <div class="ms-1">
+                Volver a visitas
+            </div>
+        </a>
+
+        Visita a {{ visit.location.client.name }}
+
+        {% include "_messages.html" %}
+
+        <div class="container text-center mt-5">
+            <h1 class="mb-4 fs-4">Duración de la visita</h1>
+            <div class="card mx-auto" style="max-width: 250px;">
+                <div class="card-body">
+                    <h2 id="timer" class="text-primary">
+                        {{ visit.duration.strftime('%H:%M:%S') }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        {% if visit.check_out is none %}
+            <!-- Clock script -->
+            <script>
+                const start = new Date("{{ visit.check_in.strftime('%Y-%m-%dT%H:%M:%S') }}");
+                const now = new Date("{{ now.strftime('%Y-%m-%dT%H:%M:%S') }}");
+
+                // Calculate the difference in milliseconds
+                let difference = now - start;
+
+                // Function to format the elapsed time as HH:MM:SS
+                function formatTime(ms) {
+                    const totalSeconds = Math.floor(ms / 1000);
+                    const hours = Math.floor(totalSeconds / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                    const seconds = totalSeconds % 60;
+
+                    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                }
+
+                // Function to start the counter
+                function startCounter() {
+                    const interval = setInterval(() => {
+                        document.getElementById('timer').innerText = formatTime(difference); // Update the timer
+                        difference += 1000; // Increase the difference by 1 second (1000 ms)
+                    }, 1000); // Update every second
+                }
+
+                // Start the counter
+                startCounter();
+            </script>
+
+            <a href="{{ url('end_visit', args=[visit.id]) }}" class="btn btn-danger">
+                Finalizar visita
+            </a>
+
+
+        {% endif %}
+
+        <div class="d-flex my-3 align-items-center justify-content-between">
+            <h2 class="mb-0 fs-3">Ventas</h2>
+            <div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                    Agregar item
+                </button>
+            </div>
+        </div>
+
+        {% if items %}
+            {% include '_visit_items_table.html' %}
+        {% else %}
+            <p>No hay items</p>
+        {% endif %}
+
+        <div class="d-flex my-3 align-items-center justify-content-between mt-5">
+            <h2 class="mb-0 fs-3">Comentario</h2>
+        </div>
+        <form method="POST" action="{{ url('update_visit_comment', args=[visit.id]) }}">
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            <div class="mb-3">
+                <textarea class="form-control" name="comment" required>{{ visit.comment if visit.comment }}</textarea>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary w-100">Actualizar comentario</button>
+            </div>
+        </form>
+
+
+        <!-- Add item -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">Añadir item</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="{{ url('add_visit_item', args=[visit.id]) }}">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                            <input type="hidden" name="visit" value="{{ visit.id }}">
+                            <div class="mb-3">
+                                <label for="exampleInputEmail1" class="form-label">Producto</label>
+                                <select id="id_producto" class="form-select" name="product" required>
+                                    <option selected disabled value="">Selecciona un producto</option>
+                                    {% for product in products %}
+                                        <option value="{{ product.id }}">{{ product }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="exampleInputEmail1" class="form-label">Distribuidor</label>
+                                <select class="form-select" name="distributor" required>
+                                    <option selected disabled value="">Selecciona un distribuidor</option>
+                                    {% for distributor in distributors %}
+                                        <option value="{{ distributor.id }}">{{ distributor.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="unit_price" class="form-label">Precio unitario</label>
+                                <input type="number" class="form-control" id="unit_price" name="unit_price" step="0.01"
+                                       required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">Cantidad</label>
+                                <input type="number" class="form-control" id="quantity" value="1" name="quantity"
+                                       required>
+                            </div>
+                            <div>
+                                <button type="submit" class="btn btn-primary w-100">Agregar Producto</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        {% for item in items %}
+            <div class="modal fade" id="editItem{{ item.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">Editar item</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" action="{{ url('edit_visit_item', args=[visit.id, item.id]) }}">
+                                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                                <input type="hidden" name="visit" value="{{ visit.id }}">
+                                <input type="hidden" name="product" value="{{ item.product.id }}">
+                                <div class="mb-3">
+                                    <label for="exampleInputEmail1" class="form-label">Producto</label>
+                                    <select class="form-select bg-light">
+                                        <option selected disabled>{{ item.product }}</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="exampleInputEmail1" class="form-label">Distribuidor</label>
+                                    <select class="form-select" name="distributor" required>
+                                        {% for distributor in distributors %}
+                                            <option value="{{ distributor.id }}" {{ 'selected' if distributor==item.distributor.id }}>
+                                                {{ distributor.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="unit_price" class="form-label">Precio unitario</label>
+                                    <input type="number" class="form-control" id="unit_price" name="unit_price"
+                                           step="0.01" value="{{ item.unit_price }}"
+                                           required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="quantity" class="form-label">Cantidad</label>
+                                    <input type="number" class="form-control" id="quantity" value="{{ item.quantity }}"
+                                           name="quantity">
+                                </div>
+                                <div>
+                                    <button type="submit" class="btn btn-primary w-100">Actualizar Cantidad</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+                 </div>
+     </div> <!-- Este cierra tu contenedor general "mx-auto" -->
+
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+      $(document).ready(function () {
+        $('#exampleModal').on('shown.bs.modal', function () {
+          $('#id_producto').select2({
+            dropdownParent: $('#exampleModal'),
+            placeholder: 'Buscar producto...',
+            width: '100%'
+          });
+        });
+      });
+    </script>
+
+{% endblock %}

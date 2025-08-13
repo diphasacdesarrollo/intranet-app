@@ -1,0 +1,43 @@
+<!-- New client & location -->
+<div class="modal fade" id="newClientLocation" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5">Añadir cliente</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url('create_client_and_location') }}">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    <div class="mb-3">
+                        <label for="ruc" class="form-label">RUC (opcional)</label>
+                        <input type="text" class="form-control" id="ruc" name="ruc">
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+
+                    <!-- Input field with clear button -->
+                    <div class="mb-3">
+                        <label for="address1" class="form-label">Dirección</label>
+                        <div class="address-container">
+                            <input id="address1" name="address" type="text" class="form-control"
+                                   placeholder="Ingresa una dirección">
+                            <button id="clear-button1" class="clear-button" title="Clear">&times;</button>
+                        </div>
+                    </div>
+
+                    <!-- Hidden fields for additional data -->
+                    <input id="place-id1" type="hidden" name="googlemaps_place_id">
+                    <input id="latitude1" type="hidden" name="latitude">
+                    <input id="longitude1" type="hidden" name="longitude">
+
+                    <div>
+                        <button type="submit" class="btn btn-primary w-100">Añadir cliente</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

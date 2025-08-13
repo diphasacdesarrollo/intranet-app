@@ -1,0 +1,108 @@
+<div class="bg-white rounded-5">
+
+    <div class="px-4 pt-4">
+        <p class="mt-4">
+            Hola, <span class="fs-4">{{ request.user.first_name }}</span>
+        </p>
+        <p>
+            {% if request.user.supervised_users.all()|length == 0 %}
+                No tienes vendedores a cargo
+            {% elif request.user.supervised_users.all()|length > 0 %}
+                Tienes {{ request.user.supervised_users.all()|length }} vendedores a cargo
+            {% endif %}
+        </p>
+    </div>
+
+    <style>
+        .buttons {
+            overflow: scroll;
+        }
+
+        @media (min-width: 768px) {
+            .buttons {
+                overflow: hidden;
+            }
+        }
+    </style>
+
+    <div class="px-2 pb-4 d-flex d-md-block buttons">
+
+        <!-- Inicio -->
+        <a href="/"
+           class="sidebar-button {{ "active" if "clases" in request.path }}">
+            <div>
+                <i class="fa-light fa-home"></i>
+            </div>
+            <div class="ms-3">
+                Inicio
+            </div>
+        </a>
+
+        <!-- Visitas -->
+        <a href="{{ url('supervisor_visits') }}"
+           class="sidebar-button {{ "active" if "supervisor/visitas" in request.path }}">
+            <div>
+                <i class="fa-light fa-calendar-days"></i>
+            </div>
+            <div class="ms-3">
+                Visitas
+            </div>
+        </a>
+
+        <!-- Visitas -->
+        <a href="{{ url('supervisor_scheduled_visits') }}"
+           class="sidebar-button {{ "active" if "supervisor/rutas" in request.path }}">
+            <div>
+                <i class="fa-regular fa-route"></i>
+            </div>
+            <div class="ms-3">
+                Rutas
+            </div>
+        </a>
+
+        <!-- Reportes -->
+        <a href="{{ url('supervisor_reports') }}"
+           class="sidebar-button {{ "active" if "supervisor/reportes" in request.path }}">
+            <div class="px-1">
+                <i class="fa-regular fa-file-invoice"></i>
+            </div>
+            <div class="ms-3">
+                Reportes
+            </div>
+        </a>
+
+        <!-- Vendedores -->
+        <a href="{{ url('supervised_users') }}"
+           class="sidebar-button {{ "active" if "supervisor/vendedores" in request.path }}">
+            <div>
+                <i class="fa-light fa-users"></i>
+            </div>
+            <div class="ms-3">
+                Vendedores
+            </div>
+        </a>
+
+        <!-- Vendedores -->
+        <a href="{{ url('supervisor_attendances') }}"
+           class="sidebar-button {{ "active" if "supervisor/asistencias" in request.path }}">
+            <div>
+                <i class="fa-regular fa-user-check"></i>
+            </div>
+            <div class="ms-3">
+                Asistencias
+            </div>
+        </a>
+
+        <a href="{{ url('logout') }}"
+           class="sidebar-button">
+            <div>
+                <i class="fa-light fa-arrow-right-from-bracket"></i>
+            </div>
+            <div class="ms-3">
+                Cerrar sesión
+            </div>
+        </a>
+
+    </div>
+
+</div>

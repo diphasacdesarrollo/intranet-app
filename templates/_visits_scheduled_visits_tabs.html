@@ -1,0 +1,10 @@
+<div class="d-flex mb-3">
+    <a href="{{ url('visits') }}"
+       class="d-block w-50 text-center pb-2 fw-semibold text-decoration-none border-bottom border-4 {{ 'border-primary' if 'visitas' in request.path else 'text-secondary' }}">
+        Visitas
+    </a>
+    <a href="{{ url('scheduled_visits') }}"
+       class="d-block w-50 text-center pb-2 fw-semibold text-decoration-none border-bottom border-4 {{ 'border-primary' if 'rutas' in request.path else 'text-secondary' }}">
+        Rutas
+    </a>
+</div>

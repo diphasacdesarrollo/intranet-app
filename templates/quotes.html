@@ -1,0 +1,194 @@
+{% extends "mobile_base.html" %}
+
+{% block content %}
+
+    <h1 class="text-center">Ventas</h1>
+
+    {% include "_messages.html" %}
+
+    {% if quotes %}
+
+
+        <!-- Button trigger modal -->
+        <div class="mb-4">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                Crear nueva cotización
+            </button>
+        </div>
+
+
+        {% if request.user.is_staff or false %}
+            <form action="{{ url('index') }}" method="GET">
+                Ventas de:
+                <select aria-label="Default select example" name="user">
+                    <option>Selecciona un usuario</option>
+                    {% for user in users %}
+                        {% if user.id == selected_user %}
+                            <option selected value="{{ user.id }}">{{ user.username }}</option>
+                        {% else %}
+                            <option value="{{ user.id }}">{{ user.username }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-outline-primary">
+                    Seleccionar
+                </button>
+            </form>
+        {% endif %}
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Cliente</th>
+                    <th scope="col">Creado en</th>
+                    <th scope="col">Última edición</th>
+                    <th scope="col"># de productos</th>
+                    <th scope="col">Total con IGV</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for quote in quotes %}
+                    <tr>
+                        <th scope="row">
+                            {{ '%05d' % quote.id }}
+                        </th>
+                        <th scope="row">
+                            <a href="{{ url('quote', args=[quote.id]) }}">
+                                {{ quote.name }}
+                            </a>
+                        </th>
+                        <td>{{ quote.client }}</td>
+                        <td>{{ localtime(quote.created_at).strftime('%d/%m/%Y %I:%H %p') }}</td>
+                        <td>{{ localtime(quote.last_edit).strftime('%d/%m/%Y %I:%H %p') }}</td>
+                        <td>
+                            {{ quote.count_items }}
+                        </td>
+                        <td>S/ {{ quote.total_with_tax }}</td>
+                        <td>
+                            <a href="{{ url('quote', args=[quote.id]) }}">
+                                <i class="fa-solid fa-pencil"></i>
+                            </a>
+                        </td>
+                        <td>
+                            {% if quote.count_items > 0 %}
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#deleteQuote{{ quote.id }}">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </a>
+                            {% else %}
+                                <a href="{{ url('delete_quote', args=[quote.id]) }}">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="deleteQuote{{ quote.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-body p-5">
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close" style="position: absolute; top: 1.5rem; right: 1.5rem;">
+                                    </button>
+                                    <p class="text-center">
+                                        ¿Seguro que quieres borrar la cotización {{ quote.name }}?<br>
+                                    </p>
+                                    <div class="mt-3">
+                                        <a href="{{ url('delete_quote', args=[quote.id]) }}"
+                                           class="btn btn-danger w-100">
+                                            Borrar cotización
+                                        </a>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">
+                                            Regresar
+                                        </button>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    {% else %}
+
+        <p>No tienes ninguna cotización.</p>
+
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+            Crear nueva cotización
+        </button>
+
+    {% endif %}
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Crear nueva cotización</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url('new_quote') }}" method="POST">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        <input type="hidden" name="user" value="{{ request.user.id }}">
+
+                        <div class="">
+                            <label for="exampleFormControlInput1" class="form-label">Nombre de cotización</label>
+                            <input type="text" class="form-control" id="exampleFormControlInput1"
+                                   name="name" placeholder="Puedes usar el nombre del cliente">
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="" class="form-label">Cliente</label>
+                            <select class="form-select" aria-label="Default select example" name="client">
+                                <option selected>Selecciona un cliente</option>
+                                <option value="farma">Farma</option>
+                                <option value="tops">Tops</option>
+                                <option value="mayoristas">Mayoristas</option>
+                                <option value="instituciones">Instituciones</option>
+                            </select>
+                        </div>
+
+
+                        <div class="mt-4">
+                            <button class="btn btn-primary w-100">
+                                Crear nueva cotización
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if request.user.is_staff %}
+        <h3>Opciones de administrador</h3>
+        <ul>
+            <li>
+                <a href="/admin">
+                    Administrador
+                </a>
+            </li>
+            <li>
+                <a href="{{ url("importar") }}">
+                    Importar
+                </a>
+            </li>
+        </ul>
+    {% endif %}
+
+{% endblock %}

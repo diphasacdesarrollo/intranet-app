@@ -1,0 +1,43 @@
+{% if iterable_object is not none %}
+    <nav>
+        <ul class="pagination">
+            {% if iterable_object.has_previous() %}
+                <li class="page-item">
+                    <a class="page-link" id="page-link-first" href="" aria-label="Previous">
+                        <span aria-hidden="true"><i class="fas fa-fast-backward"></i></span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" id="page-link-previous" href="" aria-label="Previous">
+                        <span aria-hidden="true"><i class="fas fa-step-backward"></i></span>
+                    </a>
+                </li>
+            {% endif %}
+            <li class="page-item"><p class="page-link">{{ iterable_object.number }}</p></li>
+            {% if iterable_object.has_next() %}
+                <li class="page-item">
+                    <a class="page-link" id="page-link-next" href="" aria-label="Next">
+                        <span aria-hidden="true"><i class="fas fa-step-forward"></i></span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" id="page-link-last" href="" aria-label="Previous">
+                        <span aria-hidden="true"><i class="fas fa-fast-forward"></i></span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+
+        <script src="{{ static("js/setSearchParams.js") }}"></script>
+        <script>
+            {% if iterable_object.has_previous() %}
+                setParams('page-link-first', 'pagina=1', '{{ url(iterable_link, args=args) }}')
+                setParams('page-link-previous', 'pagina={{ iterable_object.previous_page_number() }}', '{{ url(iterable_link, args=args) }}')
+            {% endif %}
+            {% if iterable_object.has_next() %}
+                setParams('page-link-next', 'pagina={{ iterable_object.next_page_number() }}', '{{ url(iterable_link, args=args) }}')
+                setParams('page-link-last', 'pagina={{ iterable_object.paginator.num_pages }}', '{{ url(iterable_link, args=args) }}')
+            {% endif %}
+        </script>
+    </nav>
+{% endif %}

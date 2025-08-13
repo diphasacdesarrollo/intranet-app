@@ -1,0 +1,159 @@
+{% extends "mobile_base.html" %}
+
+{% block content %}
+
+    <div class="mx-auto" style="max-width: 500px;">
+
+        <a href="{{ url('quote', args=[item.quote.id]) }}">
+            < Regresar a cotización {{ item.quote.name }}
+        </a>
+
+        {% if "editar" in request.path %}
+            <h3 class="text-center my-3">Editar item de cotización</h3>
+            <form action="{{ url('edit_quote_item', args=[item.id]) }}" method="POST">
+        {% else %}
+            <h3 class="text-center my-3">Crear item de cotización</h3>
+            <form action="{{ url('create_quote_item') }}" method="POST">
+        {% endif %}
+
+        {% include "_messages.html" %}
+
+        <table id="info" class="table w-100">
+            <tbody>
+            <tr>
+                <td class="text-secondary" style="border-top: 0px;">Cliente</td>
+                <td class="text-dark text-end" id="cohort_started_at"
+                    style="border-top: 0px;">{{ item.client }}</td>
+            </tr>
+
+            <tr>
+                <td class="text-secondary">Categoría</td>
+                <td class="text-dark text-end">{{ item.product.category }}</td>
+            </tr>
+
+            <tr>
+                <td class="text-secondary">Producto</td>
+                <td class="text-dark text-end">
+                    {{ item.product.name }}
+                </td>
+            </tr>
+
+            {% if item.product.active_ingredient is not none %}
+                <tr>
+                    <td class="text-secondary">Componente activo</td>
+                    <td class="text-dark text-end">{{ item.product.active_ingredient }}</td>
+                </tr>
+            {% endif %}
+
+            {% if item.product.presentation is not none %}
+                <tr>
+                    <td class="text-secondary">Presentación</td>
+                    <td class="text-dark text-end">{{ item.product.presentation }}</td>
+                </tr>
+            {% endif %}
+
+            <tr>
+                <td class="text-secondary">Precio de lista sin IGV</td>
+                <td class="text-dark text-end">S/ {{ item.product.unit_price }}</td>
+            </tr>
+
+            <tr>
+                <td class="text-secondary">Cantidad total</td>
+                <td class="text-dark text-end">
+                    {{ item.quantity }}
+                </td>
+            </tr>
+
+            <tr>
+                <td class="text-secondary">Precio unitario {{ item.client }} sin IGV</td>
+                <td class="text-dark text-end">
+
+                    <div class="input-group d-flex justify-content-end" style="width: auto;">
+                        <span class="input-group-text d-flex justify-content-end" id="basic-addon1">S/</span>
+                        <input type="number" class="form-control" id="unit_price" value="{{ item.unit_price }}"
+                               style="width: 70%; min-width: 100px; flex: auto 0; text-align: right;" step=".01"
+                               name="unit_price">
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="text-secondary" style="border-top: 0px;">Total sin IGV</td>
+                <td class="text-dark text-end" style="border-top: 0px;">S/
+                    <span id="total_without_taxes"></span>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="text-secondary">IGV</td>
+                <td class="text-dark text-end">S/
+                    <span id="taxes"></span>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="text-secondary">Total con IGV</td>
+                <td class="text-dark text-end">S/
+                    <span id="total_with_taxes"></span>
+                </td>
+            </tr>
+
+            </tbody>
+        </table>
+
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <input type="hidden" name="quote" value="{{ item.quote.id }}">
+        <input type="hidden" name="user" value="{{ request.user.id }}">
+        <input type="hidden" name="client" value="{{ item.client }}">
+        <input type="hidden" name="product" value="{{ item.product.id }}">
+        <input type="hidden" id="quantity" name="quantity" value="{{ item.quantity }}">
+
+        <script>
+            function calculate_total_without_taxes() {
+                let quantity = document.getElementById("quantity").value;
+                let unit_price = document.getElementById("unit_price").value;
+                document.getElementById("total_without_taxes").innerText = Math.round((quantity * unit_price) * 100) / 100;
+            }
+
+            function calculate_taxes() {
+                let quantity = document.getElementById("quantity").value;
+                let unit_price = document.getElementById("unit_price").value;
+                document.getElementById("taxes").innerText = Math.round(((Math.round((quantity * unit_price * 1.18) * 100) / 100) - (Math.round((quantity * unit_price) * 100) / 100)) * 100) / 100;
+            }
+
+            function calculate_total_with_taxes() {
+                let quantity = document.getElementById("quantity").value;
+                let unit_price = document.getElementById("unit_price").value;
+                document.getElementById("total_with_taxes").innerText = Math.round((quantity * unit_price * 1.18) * 100) / 100;
+            }
+
+            calculate_total_without_taxes();
+            calculate_taxes();
+            calculate_total_with_taxes();
+
+            // On any change on unit_price input, calculate subtotal
+            document.getElementById("unit_price").addEventListener("change", calculate_total_without_taxes);
+            document.getElementById("unit_price").addEventListener("change", calculate_taxes);
+            document.getElementById("unit_price").addEventListener("change", calculate_total_with_taxes);
+        </script>
+
+        {% if "editar" in request.path %}
+            <div>
+                <button type="submit" class="btn btn-primary w-100">
+                    Actualizar
+                </button>
+            </div>
+        {% else %}
+            <div>
+                <button type="submit" class="btn btn-primary w-100">
+                    Agregar
+                </button>
+            </div>
+        {% endif %}
+
+    </div>
+
+    </form>
+
+
+{% endblock %}

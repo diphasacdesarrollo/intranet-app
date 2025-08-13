@@ -1,0 +1,76 @@
+{% extends "supervisor/layout.html" %}
+
+{% block content %}
+
+    <form class="d-block d-sm-flex d-md-block d-lg-flex align-items-end mb-4"
+          action="{{ url('supervisor_visits') }}" method="GET" style="gap: 1rem;">
+        {% include 'supervisor/_filters.html' %}
+    </form>
+
+    {% if visits %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">Vendedor</th>
+                    <th scope="col">Cliente</th>
+                    <th scope="col">Ubicación</th>
+                    <th scope="col">GPS</th>
+                    <th scope="col">Inicio</th>
+                    <th scope="col">Fin</th>
+                    <th scope="col"># de productos</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for visit in visits %}
+                    <tr>
+                        <td>{{ visit.user.get_full_name() }}</td>
+                        <td>{{ visit.location.client.ruc }}: {{ visit.location.client.name }}</td>
+                        <td>{{ visit.location.address }}</td>
+
+                        <td>
+                            <a href="{{ visit.get_google_maps_link() }}" class="fw-semibold" target="_blank">
+                                <i class="fa-solid fa-location-dot"></i>
+                                Ver mapa
+                            </a>
+                        </td>
+
+                        <!--- Check in -->
+                        <td>
+                            {{ visit.check_in_lima_time.weekday()|spanish_day_of_the_week }}
+                            {{ visit.check_in_lima_time.strftime('%d') }} de
+                            {{ visit.check_in_lima_time.month|spanish_month }}, 2025 <br>
+                            {{ visit.check_in_lima_time.strftime('%I:%M %p') }}
+                        </td>
+
+                        <!-- Check out -->
+                        <td>
+                            {% if visit.check_out %}
+                                {{ visit.check_out_lima_time.weekday()|spanish_day_of_the_week }}
+                                {{ visit.check_out_lima_time.strftime('%d') }} de
+                                {{ visit.check_out_lima_time.month|spanish_month }}, 2025 <br>
+                                {{ visit.check_out_lima_time.strftime('%I:%M %p') }}
+                            {% else %}
+                                <span class="text-danger">No registra salida</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ visit.get_distinct_products_count() }} productos
+                        </td>
+
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No se encontraron visitas que coincidan con los filtros.</p>
+    {% endif %}
+
+
+
+
+{% endblock %}

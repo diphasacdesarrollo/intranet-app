@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="mx-auto" style="max-width: 500px;">
+
+        <h2>Importar productos</h2>
+
+        {% include '_messages.html' %}
+
+        <p>
+            Utilizar la siguiente
+            <a href="{{ url('export_template') }}">plantilla</a>
+            para importar productos y sube el archivo en el formulario.
+        </p>
+
+
+        <form action="{{ url('importar') }}" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+            <div class="my-3">
+                <label for="formFile" class="form-label">Archivo</label>
+                <input class="form-control" type="file" id="formFile" name="file">
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary w-100">
+                    Importar
+                </button>
+            </div>
+        </form>
+
+    </div>
+
+{% endblock %}

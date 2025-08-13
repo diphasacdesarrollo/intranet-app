@@ -1,0 +1,56 @@
+{% extends "supervisor/layout.html" %}
+
+{% block content %}
+
+    <a href="{{ url('supervised_users') }}">
+        < Regresar a vendedores
+    </a>
+
+    <div class="" style="max-width: 500px;">
+        <h1 class="fs-3 my-4">Importar clientes por zona</h1>
+
+        {% include '_messages.html' %}
+
+        <form action="{{ url('import_excel') }}" method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="file" class="form-label">
+                    Sube un archivo excel siguiendo
+                    <a href="https://intranet.diphasac.com/static/Plantilla_clientes_por_zona.xlsx">
+                        esta plantilla
+                    </a>.
+                </label>
+                <input type="file" class="form-control" id="file" name="file">
+            </div>
+
+            <input type="hidden" name="type" value="import">
+
+            <div class="d-flex gap-3">
+                <button type="submit" class="d-none btn btn-outline-primary w-100" onclick="setFormType('validate')">Validar
+                </button>
+                <button type="submit" class="btn btn-primary w-100">Importar</button>
+            </div>
+        </form>
+
+        <script>
+            function setFormType(type) {
+                // Remove any existing hidden input with name 'type'
+                let existingInput = document.querySelector("#excel-form input[name='type']");
+                if (existingInput) {
+                    existingInput.remove();
+                }
+
+                // Create new hidden input field
+                let hiddenInput = document.createElement("input");
+                hiddenInput.type = "hidden";
+                hiddenInput.name = "type";
+                hiddenInput.value = type;
+
+                // Append hidden input to the form
+                document.getElementById("excel-form").appendChild(hiddenInput);
+            }
+        </script>
+
+    </div>
+
+
+{% endblock %}

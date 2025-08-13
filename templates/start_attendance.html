@@ -1,0 +1,327 @@
+{% extends "mobile_base.html" %}
+
+{% block content %}
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAyIZy6R__9Vcu8IntUmtVdeHXxiFHaUj4&libraries=places"></script>
+
+    <div class="mx-auto" style="max-width: 500px;">
+        <h1 class="text-center fs-3">Registrar asistencia</h1>
+
+        {% include '_messages.html' %}
+
+        <form method="post" action="{{ url('start_attendance') }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <!-- Check in datetime -->
+            <div class="mb-3">
+                <label for="id_check_in" class="form-label">Fecha y hora de inicio</label>
+                <input type="datetime-local" name="check_in" id="id_check_in" class="form-control bg-light"
+                       readonly
+                       required>
+            </div>
+
+            <!-- Script to update check in datetime -->
+            <script>
+                function updateDateTime() {
+                    const input = document.getElementById('id_check_in');
+                    const now = new Date();
+
+                    // Adjust to GMT-5 (subtract 5 hours)
+                    const gmtMinus5 = new Date(now.getTime() - 5 * 60 * 60 * 1000);
+
+                    // Format the date to 'YYYY-MM-DDTHH:MM:SS' for display purposes
+                    const year = gmtMinus5.getUTCFullYear();
+                    const month = String(gmtMinus5.getUTCMonth() + 1).padStart(2, '0');
+                    const day = String(gmtMinus5.getUTCDate()).padStart(2, '0');
+                    const hours = String(gmtMinus5.getUTCHours()).padStart(2, '0');
+                    const minutes = String(gmtMinus5.getUTCMinutes()).padStart(2, '0');
+                    const seconds = String(gmtMinus5.getUTCSeconds()).padStart(2, '0');
+
+                    const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+                    input.value = formattedDate.slice(0, 16); // Truncate seconds for datetime-local input
+                }
+
+                // Update the field every second
+                setInterval(updateDateTime, 1000);
+
+                // Initialize the value immediately when the page loads
+                document.addEventListener('DOMContentLoaded', updateDateTime);
+            </script>
+
+            <!-- Location -->
+            <div class="container-fluid px-0">
+                <div class="row">
+                    <div class="col">
+                        <label for="id_latitude" class="form-label">Latitud</label>
+                        <input type="text" name="latitude_check_in" id="id_latitude" class="form-control bg-light"
+                               readonly
+                               required>
+                    </div>
+                    <div class="col">
+                        <label for="id_longitude" class="form-label">Longitud</label>
+                        <input type="text" name="longitude_check_in" id="id_longitude" class="form-control bg-light"
+                               readonly
+                               required>
+                        <div class="invalid-feedback">Please provide a valid longitude.</div>
+                    </div>
+                </div>
+            </div>
+
+            <small>
+                <a href="#" id="toggle-map" class="text-primary">Mostrar mapa</a>
+            </small>
+
+            <div id="map-container" class="mt-3 d-none">
+                <iframe id="google-map"
+                        src="https://maps.google.com/maps?q=0,0&z=15&output=embed"
+                        style="width: 100%; height: 400px; border: 0;"
+                        allowfullscreen
+                        loading="lazy">
+                </iframe>
+            </div>
+
+            <script>
+                function updateGoogleMap(latitude, longitude) {
+                    const mapIframe = document.getElementById('google-map');
+                    mapIframe.src = `https://maps.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`;
+                }
+
+                function getLocation() {
+                    const latitudeInput = document.getElementById('id_latitude');
+                    const longitudeInput = document.getElementById('id_longitude');
+                    const latitudeDanger = document.getElementById('latitude-danger');
+                    const longitudeDanger = document.getElementById('longitude-danger');
+
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                const latitude = position.coords.latitude;
+                                const longitude = position.coords.longitude;
+
+                                // Set latitude and longitude in inputs
+                                latitudeInput.value = latitude.toFixed(7);
+                                longitudeInput.value = longitude.toFixed(7);
+
+                                // Update Google Map
+                                updateGoogleMap(latitude, longitude);
+
+                                document.getElementById('visit-submit').disabled = false;
+                            },
+                            (error) => {
+                                if (error.code === error.PERMISSION_DENIED) {
+                                    alert('Se requiere el acceso a tu ubicación para continuar.');
+                                    latitudeDanger.classList.remove('d-none');
+                                    longitudeDanger.classList.remove('d-none');
+                                } else {
+                                    console.error('Error retrieving location:', error.message);
+                                }
+                            }
+                        );
+                    } else {
+                        alert('Geolocation is not supported by this browser.');
+                    }
+                }
+
+                function toggleMapVisibility() {
+                    const mapContainer = document.getElementById('map-container');
+                    const toggleLink = document.getElementById('toggle-map');
+
+                    if (mapContainer.classList.contains('d-none')) {
+                        // Show map
+                        mapContainer.classList.remove('d-none');
+                        toggleLink.textContent = 'Ocultar mapa';
+                    } else {
+                        // Hide map
+                        mapContainer.classList.add('d-none');
+                        toggleLink.textContent = 'Mostrar mapa';
+                    }
+                }
+
+                // Add event listener for toggle map link
+                document.getElementById('toggle-map').addEventListener('click', function (event) {
+                    event.preventDefault();
+                    toggleMapVisibility();
+                });
+
+                // Attempt to get location on page load
+                document.addEventListener('DOMContentLoaded', getLocation);
+            </script>
+
+            <input type="hidden" name="user" value="{{ request.user.id }}">
+
+            <!-- Cámara para capturar foto -->
+            <div id="camera-container">
+                <video id="camera" autoplay playsinline
+                       style="width: 100%; max-width: 480px; transform: scaleX(-1);"></video>
+                <button type="button" id="capture">Capturar Foto</button>
+            </div>
+
+            <div id="preview-container" style="display: none; text-align: center;">
+                <img id="preview" style="width: 100%; max-width: 480px;"/>
+                <button type="button" id="retake">Tomar otra Foto</button>
+            </div>
+
+            <canvas id="canvas" style="display: none;"></canvas>
+            <input type="hidden" name="check_in_photo" id="photo-data">
+
+
+            <script>
+                let stream;
+                const video = document.getElementById('camera');
+                const canvas = document.getElementById('canvas');
+                const context = canvas.getContext('2d');
+                const captureBtn = document.getElementById('capture');
+                const retakeBtn = document.getElementById('retake');
+                const preview = document.getElementById('preview');
+                const cameraContainer = document.getElementById('camera-container');
+                const previewContainer = document.getElementById('preview-container');
+                let photoBlob = null;
+
+                async function startCamera() {
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: {
+                                facingMode: {ideal: 'user'}, // Use front camera
+                                width: {ideal: 720},
+                                height: {ideal: 960} // Enforce 3:4 aspect ratio
+                            }
+                        });
+                        video.srcObject = stream;
+                    } catch (error) {
+                        alert('No se pudo acceder a la cámara. Asegúrate de dar permisos.');
+                    }
+                }
+
+                captureBtn.addEventListener('click', () => {
+                    const targetWidth = 720;
+                    const targetHeight = 960;
+
+                    canvas.width = targetWidth;
+                    canvas.height = targetHeight;
+
+                    context.save();
+                    // Mirror the image horizontally (undo mirroring from CSS)
+                    context.translate(targetWidth, 0);
+                    context.scale(-1, 1);
+                    context.drawImage(video, 0, 0, targetWidth, targetHeight);
+                    context.restore();
+
+                    // Convert to Blob for upload
+                    canvas.toBlob((blob) => {
+                        photoBlob = blob;
+                        preview.src = URL.createObjectURL(blob);
+                        document.getElementById('photo-data').value = canvas.toDataURL('image/jpeg');
+                        showPreview();
+                    }, 'image/jpeg');
+                });
+
+                function showPreview() {
+                    cameraContainer.style.display = 'none';
+                    previewContainer.style.display = 'block';
+                    if (stream) {
+                        stream.getTracks().forEach(track => track.stop()); // Stop camera stream
+                    }
+                }
+
+                retakeBtn.addEventListener('click', () => {
+                    previewContainer.style.display = 'none';
+                    cameraContainer.style.display = 'block';
+                    startCamera();
+                });
+
+                document.addEventListener('DOMContentLoaded', startCamera);
+            </script>
+
+            <button type="submit" class="btn btn-primary w-100 mt-3" id="visit-submit" disabled>
+                Registrar inicio de asistencia
+            </button>
+        </form>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const form = document.querySelector('form');
+                const submitButton = document.getElementById('visit-submit');
+
+                form.addEventListener('submit', function () {
+                    submitButton.disabled = true;
+                    submitButton.textContent = "Enviando..."; // Optional: Change text to indicate submission
+                });
+            });
+        </script>
+    </div>
+
+    <script>
+        // Initialize Google Maps Places Autocomplete for each form
+        function initAutocomplete() {
+            const forms = [
+                {
+                    addressInput: "address1",
+                    placeIdInput: "place-id1",
+                    latitudeInput: "latitude1",
+                    longitudeInput: "longitude1",
+                    clearButton: "clear-button1",
+                },
+                {
+                    addressInput: "address2",
+                    placeIdInput: "place-id2",
+                    latitudeInput: "latitude2",
+                    longitudeInput: "longitude2",
+                    clearButton: "clear-button2",
+                }
+            ];
+
+            forms.forEach(({addressInput, placeIdInput, latitudeInput, longitudeInput, clearButton}) => {
+                const addressElement = document.getElementById(addressInput);
+                const placeIdElement = document.getElementById(placeIdInput);
+                const latitudeElement = document.getElementById(latitudeInput);
+                const longitudeElement = document.getElementById(longitudeInput);
+                const clearButtonElement = document.getElementById(clearButton);
+
+                const autocomplete = new google.maps.places.Autocomplete(addressElement, {
+                    types: ["geocode"],
+                    componentRestrictions: {country: "PE"},
+                });
+
+                // Set bounds dynamically based on user's location
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userLocation = new google.maps.LatLng(
+                        position.coords.latitude,
+                        position.coords.longitude
+                    );
+
+                    const circle = new google.maps.Circle({
+                        center: userLocation,
+                        radius: 10000,
+                    });
+
+                    autocomplete.setBounds(circle.getBounds());
+                });
+
+                // Handle place selection
+                autocomplete.addListener("place_changed", () => {
+                    const place = autocomplete.getPlace();
+
+                    if (place.geometry && place.place_id) {
+                        addressElement.value = place.formatted_address;
+                        placeIdElement.value = place.place_id;
+                        latitudeElement.value = place.geometry.location.lat().toFixed(12);
+                        longitudeElement.value = place.geometry.location.lng().toFixed(12);
+                    }
+                });
+
+                // Clear input fields
+                clearButtonElement.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    addressElement.value = "";
+                    placeIdElement.value = "";
+                    latitudeElement.value = "";
+                    longitudeElement.value = "";
+                });
+            });
+        }
+
+        window.onload = initAutocomplete;
+    </script>
+
+
+{% endblock %}

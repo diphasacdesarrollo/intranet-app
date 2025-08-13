@@ -1,0 +1,55 @@
+{% extends "mobile_base.html" %}
+
+{% block content %}
+
+    <div class="mx-auto" style="max-width: 500px;">
+
+        <div class="d-flex justify-content-between">
+            <h1 class="text-center fs-2">Productos</h1>
+        </div>
+
+        {% include '_messages.html' %}
+
+        <div class="my-2">
+            <label for="" class="form-label">Categoría</label>
+            <div class="btn-group" role="group" aria-label="Basic example">
+                <a href="{{ url('products') }}" class="btn btn-outline-secondary {{ 'active' if category_filter is none }}">
+                    Todos
+                </a>
+                {% for category in categories %}
+                    <a href="{{ url('products') }}?category_filter={{ category.0 }}"
+                       class="btn btn-outline-secondary {{ 'active' if category_filter == category.0 }}">
+                        {{ category.1 }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if products %}
+
+            <small>Se encontraron {{ products|length }} productos</small>
+
+            {% for product in products %}
+
+                <div class="d-flex">
+                    <div>
+
+                    </div>
+                <div>
+                    <h2 class="fs-5">{{ product.name }}</h2>
+                    <p>{{ product.active_ingredient }}</p>
+                    <p>{{ product.presentation }}</p>
+                </div>
+                </div>
+
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                No se encontraron productos que coincidan con la búsqueda
+            </div>
+        {% endif %}
+
+    </div>
+
+
+{% endblock %}

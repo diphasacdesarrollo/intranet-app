@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content_2 %}
+
+<section class="px-3 px-sm-4 px-md-5 pt-4 pb-5">
+    <div class="mx-auto" style="max-width: 1000px;">
+        {% block content %}
+
+        {% endblock %}
+        <div class="py-4"></div>
+    </div>
+
+</section>
+
+<!-- Navbar -->
+<nav class="bottom-nav">
+    <div class="container-fluid px-0">
+        <ul class="nav justify-content-around">
+            <li class="nav-item">
+                <a href="{{ url('visits') }}" class="nav-link {{ 'active' if '/visitas' in request.path or '/rutas in request.path' in request.path }}">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="d-block small">Visitas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url('attendances') }}"
+                   class="nav-link {{ 'active' if 'asistencias' in request.path }}">
+                    <i class="fas fa-user-check"></i>
+                    <span class="d-block small">Asistencia</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url('progress') }}"
+                   class="nav-link {{ 'active' if 'progreso' in request.path }}">
+                    <i class="fas fa-chart-line"></i>
+                    <span class="d-block small">Progreso</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url('products') }}"
+                   class="nav-link {{ 'active' if 'productos' in request.path }}">
+                    <i class="fa-solid fa-list"></i>
+                    <span class="d-block small">Catálogo</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+
+{% endblock %}
